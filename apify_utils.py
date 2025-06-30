@@ -2,6 +2,8 @@ import os
 import requests
 import time
 import pandas as pd
+import streamlit as st
+
 
 
 APIFY_API_KEY = os.getenv("APIFY_API_KEY")
