@@ -1,43 +1,20 @@
 import requests
-import time
 
-RAPIDAPI_KEY = "813ec90f04msh60b85bd19042914p1d5c47jsnc3f5ecaea33a"  # Replace with st.secrets later
+SPOTIFY_API_URL = "https://spotify-label-api.fly.dev/spotify_label"
 
-API_URL = "https://shazam.p.rapidapi.com/search"
-
-HEADERS = {
-    "X-RapidAPI-Key": RAPIDAPI_KEY,
-    "X-RapidAPI-Host": "shazam.p.rapidapi.com"
-}
-
-def shazam_lookup(title: str, artist: str) -> dict:
-    """Query Shazam for a given song title and artist. Returns metadata including label if available."""
-    query = f"{title} {artist}"
-    params = {"term": query, "locale": "en-US", "offset": "0", "limit": "1"}
+def get_spotify_label(title: str, artist: str) -> dict:
+    """Query your deployed Spotify label scraper."""
+    params = {"song": title, "artist": artist}
 
     try:
-        res = requests.get(API_URL, headers=HEADERS, params=params, timeout=10)
+        res = requests.get(SPOTIFY_API_URL, params=params, timeout=15)
         data = res.json()
-
-        hits = data.get("tracks", {}).get("hits", [])
-        if not hits:
-            return {}
-
-        track = hits[0]["track"]
-
-        # Try to find a metadata field labeled "Label"
-        label = ""
-        for section in track.get("sections", []):
-            for item in section.get("metadata", []):
-                if item.get("title", "").lower() == "label":
-                    label = item.get("text", "")
-                    break
-
         return {
-            "Shazam Title": track.get("title"),
-            "Shazam Artist": track.get("subtitle"),
-            "Label": label
+            "Spotify Title": data.get("track"),
+            "Spotify Artist": data.get("artist"),
+            "Album": data.get("album"),
+            "Spotify Label": data.get("label")
         }
     except Exception as e:
-        print("Shazam lookup failed:", e)
+        print("Spotify label lookup failed:", e)
         return {}
