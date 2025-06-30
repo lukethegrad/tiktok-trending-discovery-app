@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
+import os
+
 from apify_utils import run_trending_scraper
+
 
 st.set_page_config(page_title="TikTok Trending Discovery", layout="wide")
 
