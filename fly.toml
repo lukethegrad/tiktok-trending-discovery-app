@@ -1,8 +1,7 @@
 app = "spotify-label-api"  # Change to your Fly app name
 
 [build]
-  dockerfile = "backend/Dockerfile"
-  context = "backend"
+  dockerfile = "Dockerfile"
 
 [env]
 PORT = "8080"
