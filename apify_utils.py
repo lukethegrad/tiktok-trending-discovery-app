@@ -2,11 +2,10 @@ import os
 import requests
 import time
 import pandas as pd
-from dotenv import load_dotenv
 
 load_dotenv()
 
-APIFY_API_KEY = os.getenv("APIFY_API_KEY", "your_apify_api_key_here")
+APIFY_API_KEY = os.getenv("APIFY_API_KEY")
 SCRAPER_ACTOR = "lexis-solutions/tiktok-trending-songs-scraper"
 
 def run_trending_scraper():
