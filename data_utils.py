@@ -2,28 +2,22 @@ import pandas as pd
 import streamlit as st
 
 def process_raw_data(df: pd.DataFrame) -> pd.DataFrame:
-    # Show actual columns so we can debug
+    # Print the original columns for debug
     st.write("Raw DataFrame columns:", list(df.columns))
 
-    # Try to find matching columns (case-insensitive fallback)
-    col_map = {}
-    for col in df.columns:
-        c = col.lower()
-        if "title" in c:
-            col_map["title"] = col
-        elif "author" in c:
-            col_map["authorName"] = col
-        elif "soundid" in c or "sound_id" in c:
-            col_map["soundId"] = col
-
-    if not all(key in col_map for key in ["title", "authorName", "soundId"]):
-        st.error("Required fields not found in the Apify dataset.")
+    # Rename and extract needed fields
+    if not all(col in df.columns for col in ["title", "author", "song_id"]):
+        st.error("Required columns not found in the dataset.")
         return pd.DataFrame()
 
-    # Extract and clean
-    df = df[[col_map["title"], col_map["authorName"], col_map["soundId"]]].copy()
-    df.columns = ["Title", "Artist", "Sound ID"]
+    df = df[["title", "author", "song_id"]].copy()
+    df.rename(columns={
+        "title": "Title",
+        "author": "Artist",
+        "song_id": "Sound ID"
+    }, inplace=True)
 
+    # Construct TikTok URL
     df["TikTok Sound URL"] = df["Sound ID"].apply(
         lambda sid: f"https://www.tiktok.com/music/original-sound-{sid}" if pd.notna(sid) else None
     )
