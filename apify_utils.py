@@ -5,7 +5,8 @@ import pandas as pd
 
 
 APIFY_API_KEY = os.getenv("APIFY_API_KEY")
-SCRAPER_ACTOR = "lexis-solutions/tiktok-trending-songs-scraper"
+SCRAPER_ACTOR = "lexis-solutions~tiktok-trending-songs-scraper"
+
 
 def run_trending_scraper():
     # 1. Trigger the actor
