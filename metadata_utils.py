@@ -11,7 +11,7 @@ HEADERS = {
 }
 
 def shazam_lookup(title: str, artist: str) -> dict:
-    """Query Shazam for a given song title and artist. Returns metadata."""
+    """Query Shazam for a given song title and artist. Returns metadata including label if available."""
     query = f"{title} {artist}"
     params = {"term": query, "locale": "en-US", "offset": "0", "limit": "1"}
 
@@ -24,12 +24,20 @@ def shazam_lookup(title: str, artist: str) -> dict:
             return {}
 
         track = hits[0]["track"]
+
+        # Try to find a metadata field labeled "Label"
+        label = ""
+        for section in track.get("sections", []):
+            for item in section.get("metadata", []):
+                if item.get("title", "").lower() == "label":
+                    label = item.get("text", "")
+                    break
+
         return {
             "Shazam Title": track.get("title"),
             "Shazam Artist": track.get("subtitle"),
-            "Label": track.get("sections", [{}])[0].get("metadata", [{}])[0].get("text", ""),
+            "Label": label
         }
     except Exception as e:
         print("Shazam lookup failed:", e)
         return {}
-
