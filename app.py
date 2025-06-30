@@ -10,6 +10,7 @@ st.markdown("This tool pulls the top 100 trending TikTok sounds via Apify.")
 # Run button
 if st.button("Fetch Trending Songs"):
     with st.spinner("Fetching data from Apify..."):
+        st.write("API key loaded:", os.getenv("APIFY_API_KEY"))
         df = run_trending_scraper()
         if df is not None and not df.empty:
             st.success(f"Fetched {len(df)} songs!")
