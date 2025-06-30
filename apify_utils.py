@@ -3,7 +3,6 @@ import requests
 import time
 import pandas as pd
 
-load_dotenv()
 
 APIFY_API_KEY = os.getenv("APIFY_API_KEY")
 SCRAPER_ACTOR = "lexis-solutions/tiktok-trending-songs-scraper"
