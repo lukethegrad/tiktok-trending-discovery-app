@@ -17,7 +17,6 @@ def run_trending_scraper():
     payload = {}
 
     # 🔍 DEBUG LOGGING
-    st.write("🔑 Token used:", APIFY_API_KEY)
     st.write("🔗 POSTing to:", run_url)
     st.write("📦 Headers:", headers)
     st.write("📝 Payload:", payload)
