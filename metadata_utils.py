@@ -3,12 +3,14 @@ import os
 
 SPOTIFY_API_URL = "https://spotify-label-api.fly.dev/spotify_label"
 
-# Get secrets from environment variables (injected by Streamlit)
-SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
-SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+
 
 def enrich_with_spotify_metadata(title: str, artist: str) -> dict:
     """Query your deployed Spotify label scraper."""
+    # Get secrets from environment variables (injected by Streamlit)
+    SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+    SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+    
     params = {"song": title, "artist": artist}
 
     try:
