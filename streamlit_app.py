@@ -18,12 +18,17 @@ def enrich_with_metadata(df):
     enriched_rows = []
     for _, row in df.iterrows():
         meta = enrich_with_spotify_metadata(row["Title"], row["Artist"])
-        enriched_rows.append({
-            **row,
-            **meta
-        })
-        time.sleep(0.5)  # Prevent rate-limiting or overloading the API
+        if not meta:
+            meta = {
+                "Spotify Title": None,
+                "Spotify Artist": None,
+                "Album": None,
+                "Spotify Label": "Lookup Failed"
+            }
+        enriched_rows.append({**row, **meta})
+        time.sleep(0.5)
     return pd.DataFrame(enriched_rows)
+
 
 # Main button
 if st.button("Fetch Trending Songs"):
