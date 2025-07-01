@@ -6,7 +6,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_2 like Mac OS X)"
 }
 
-def scrape_spotify_label(song_title: str, artist_name: str) -> dict:
+def get_spotify_label(song_title: str, artist_name: str) -> dict:
     try:
         print(f"[DEBUG] Starting label scrape for: {song_title} by {artist_name}")
 
