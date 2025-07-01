@@ -5,26 +5,24 @@ import time
 
 from apify_utils import run_trending_scraper
 from data_utils import process_raw_data
-from metadata_utils import shazam_lookup
+from metadata_utils import enrich_with_spotify_metadata
 from label_filter import is_signed_label, filter_unsigned_tracks
-
-
 
 st.set_page_config(page_title="TikTok Trending Discovery", layout="wide")
 
 st.title("🎵 TikTok Trending Discovery Tool")
 st.markdown("This tool pulls the top 100 trending TikTok sounds via Apify.")
 
-# Helper to enrich each song with Shazam metadata
+# Helper to enrich each song with Spotify metadata
 def enrich_with_metadata(df):
     enriched_rows = []
     for _, row in df.iterrows():
-        meta = shazam_lookup(row["Title"], row["Artist"])
+        meta = enrich_with_spotify_metadata(row["Title"], row["Artist"])
         enriched_rows.append({
             **row,
             **meta
         })
-        time.sleep(0.75)  # Prevent rate-limiting on free RapidAPI plan
+        time.sleep(0.5)  # Prevent rate-limiting or overloading the API
     return pd.DataFrame(enriched_rows)
 
 # Main button
@@ -35,20 +33,20 @@ if st.button("Fetch Trending Songs"):
             clean_df = process_raw_data(df)
             st.success(f"Fetched {len(clean_df)} clean songs!")
 
-            with st.spinner("Enriching with Shazam metadata..."):
+            with st.spinner("Enriching with Spotify metadata..."):
                 enriched_df = enrich_with_metadata(clean_df)
-            
+
             with st.spinner("Filtering signed tracks..."):
                 unsigned_df = filter_unsigned_tracks(enriched_df)
-            
+
                 st.success(f"{len(unsigned_df)} unsigned or unknown-label songs found.")
                 st.dataframe(unsigned_df)
 
+            # Optional: Download buttons
+            # csv = unsigned_df.to_csv(index=False).encode("utf-8")
+            # json = unsigned_df.to_json(orient="records")
+            # st.download_button("Download CSV", csv, "unsigned_songs.csv", "text/csv")
+            # st.download_button("Download JSON", json, "unsigned_songs.json", "application/json")
 
-            # Optional: Add download after enrichment is stable
-            # csv = enriched_df.to_csv(index=False).encode("utf-8")
-            # json = enriched_df.to_json(orient="records")
-            # st.download_button("Download CSV", csv, "enriched_songs.csv", "text/csv")
-            # st.download_button("Download JSON", json, "enriched_songs.json", "application/json")
         else:
             st.error("No data was returned from Apify.")
