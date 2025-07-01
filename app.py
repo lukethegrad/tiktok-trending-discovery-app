@@ -1,7 +1,7 @@
 # app.py
 
 from flask import Flask, request, jsonify
-from spotify_scraper import scrape_spotify_label  # or get_spotify_label if you renamed it
+from spotify_scraper import get_spotify_label  # or get_spotify_label if you renamed it
 
 app = Flask(__name__)
 
@@ -13,7 +13,7 @@ def get_spotify_label():
     if not song or not artist:
         return jsonify({"error": "Missing 'song' or 'artist' query parameter"}), 400
 
-    result = scrape_spotify_label(song, artist)
+    result = get_spotify_label(song, artist)
     return jsonify(result)
 
 if __name__ == "__main__":
