@@ -14,7 +14,7 @@ EXCLUDED_LABELS = [
     "artiste first", "mom+pop", "zomba", "saregama", "polydor", "domino recordings", 
     "def jam", "island", "3qtr", "aditya music", "tips industries", "concord", 
     "10k projects", "Mass Appeal", "black 17 media", "oto8", "Atlantic", "WM", 
-    "Robots & Humans", "TDE", "Columbia"
+    "Robots & Humans", "TDE", "Columbia", "The System", "300 entertainment", "Cash Money"
 ]
 
 def is_signed_label(label: str) -> bool:
