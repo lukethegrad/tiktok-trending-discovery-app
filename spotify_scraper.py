@@ -1,64 +1,53 @@
-import asyncio
-from playwright.async_api import async_playwright
+import requests
+from bs4 import BeautifulSoup
+import re
 
-IPHONE_USER_AGENT = (
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 15_2 like Mac OS X) "
-    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.2 Mobile/15E148 Safari/604.1"
-)
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_2 like Mac OS X)"
+}
 
-async def scrape_spotify_label(song_title: str, artist_name: str):
-    async with async_playwright() as p:
-        browser = await p.webkit.launch(headless=True)
-        context = await browser.new_context(
-            user_agent=IPHONE_USER_AGENT,
-            viewport={"width": 375, "height": 812},
-            device_scale_factor=3,
-            is_mobile=True,
-            has_touch=True,
-        )
-        page = await context.new_page()
+def get_spotify_label(song_title: str, artist_name: str) -> dict:
+    query = f"{song_title} {artist_name}".replace(" ", "+")
+    search_url = f"https://open.spotify.com/search/{query}/tracks"
 
-        query = f"{song_title} {artist_name}".replace(" ", "%20")
-        search_url = f"https://open.spotify.com/search/{query}"
-        await page.goto(search_url, timeout=60000)
+    try:
+        res = requests.get(search_url, headers=HEADERS)
+        if res.status_code != 200:
+            return {"error": f"Failed to load search page ({res.status_code})"}
 
-        try:
-            await page.wait_for_selector('a[href^="/track/"]', timeout=10000)
-            track_link = await page.query_selector('a[href^="/track/"]')
-            await track_link.click()
-            await page.wait_for_timeout(3000)
-        except Exception:
-            await browser.close()
-            return {"error": "Track not found on Spotify"}
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        try:
-            track_title = await page.text_content('h1[data-testid="nowplaying-track-link"]')
-            artist = await page.text_content('span[data-testid="nowplaying-artist"] a')
-        except Exception:
-            track_title = song_title
-            artist = artist_name
+        # Find the first track link
+        match = re.search(r'"uri":"spotify:track:(.*?)"', res.text)
+        if not match:
+            return {"error": "Track ID not found in search results"}
+        track_id = match.group(1)
 
-        try:
-            album_button = await page.query_selector('a[href^="/album/"]')
-            await album_button.click()
-            await page.wait_for_timeout(3000)
-        except Exception:
-            await browser.close()
-            return {"error": "Could not access album page"}
+        # Visit album page via track page
+        track_url = f"https://open.spotify.com/track/{track_id}"
+        res = requests.get(track_url, headers=HEADERS)
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        try:
-            album_title = await page.text_content('h1[data-testid="entityTitle"]')
-            label_block = await page.text_content('span[class*="Type__TypeElement"] >> text=/℗/')
-            label_text = label_block.strip() if label_block else "Unknown"
-        except Exception:
-            album_title = "Unknown"
-            label_text = "Unknown"
+        album_match = re.search(r'"uri":"spotify:album:(.*?)"', res.text)
+        if not album_match:
+            return {"error": "Album ID not found"}
+        album_id = album_match.group(1)
 
-        await browser.close()
+        # Now get album metadata
+        album_url = f"https://open.spotify.com/album/{album_id}"
+        res = requests.get(album_url, headers=HEADERS)
+        if res.status_code != 200:
+            return {"error": "Album page fetch failed"}
+
+        label_match = re.search(r"℗[^<]+", res.text)
+        label_text = label_match.group(0).strip() if label_match else "Unknown"
+
         return {
-            "track": track_title,
-            "artist": artist,
-            "album": album_title,
-            "label": label_text,
+            "track": song_title,
+            "artist": artist_name,
+            "album": album_id,
+            "label": label_text
         }
 
+    except Exception as e:
+        return {"error": str(e)}
