@@ -1,66 +1,61 @@
-import requests
-from bs4 import BeautifulSoup
-import re
+# spotify_scraper.py
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_2 like Mac OS X)"
-}
+import requests
+import base64
+import os
+
+# Set these via environment variables or secrets in production
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+def get_access_token() -> str:
+    auth_str = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}"
+    b64_auth_str = base64.b64encode(auth_str.encode()).decode()
+
+    headers = {
+        "Authorization": f"Basic {b64_auth_str}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    data = {
+        "grant_type": "client_credentials"
+    }
+
+    response = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
+    response.raise_for_status()
+    return response.json()["access_token"]
 
 def get_spotify_label(song_title: str, artist_name: str) -> dict:
-    try:
-        print(f"[DEBUG] Starting label scrape for: {song_title} by {artist_name}")
+    token = get_access_token()
 
-        query = f"{song_title} {artist_name}".replace(" ", "+")
-        search_url = f"https://open.spotify.com/search/{query}/tracks"
-        print(f"[DEBUG] Search URL: {search_url}")
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
 
-        res = requests.get(search_url, headers=HEADERS)
-        print(f"[DEBUG] Search response status: {res.status_code}")
-        if res.status_code != 200:
-            return {"error": f"Failed to load search page (status {res.status_code})"}
+    # Search for the track
+    query = f"{song_title} {artist_name}"
+    search_url = f"https://api.spotify.com/v1/search"
+    params = {"q": query, "type": "track", "limit": 1}
 
-        # Search for track ID
-        match = re.search(r'"uri":"spotify:track:(.*?)"', res.text)
-        if not match:
-            print("[DEBUG] No track ID found in search results")
-            return {"error": "Track ID not found in search results"}
-        track_id = match.group(1)
-        print(f"[DEBUG] Found track ID: {track_id}")
+    search_res = requests.get(search_url, headers=headers, params=params)
+    search_res.raise_for_status()
+    items = search_res.json().get("tracks", {}).get("items", [])
 
-        # Get album page from track page
-        track_url = f"https://open.spotify.com/track/{track_id}"
-        print(f"[DEBUG] Track URL: {track_url}")
-        res = requests.get(track_url, headers=HEADERS)
-        print(f"[DEBUG] Track page status: {res.status_code}")
-        if res.status_code != 200:
-            return {"error": "Failed to load track page"}
+    if not items:
+        return {"error": "Track not found"}
 
-        album_match = re.search(r'"uri":"spotify:album:(.*?)"', res.text)
-        if not album_match:
-            print("[DEBUG] Album ID not found on track page")
-            return {"error": "Album ID not found"}
-        album_id = album_match.group(1)
-        print(f"[DEBUG] Found album ID: {album_id}")
+    track = items[0]
+    album_id = track["album"]["id"]
 
-        # Load album page
-        album_url = f"https://open.spotify.com/album/{album_id}"
-        print(f"[DEBUG] Album URL: {album_url}")
-        res = requests.get(album_url, headers=HEADERS)
-        print(f"[DEBUG] Album page status: {res.status_code}")
-        if res.status_code != 200:
-            return {"error": "Album page fetch failed"}
+    # Get album info
+    album_url = f"https://api.spotify.com/v1/albums/{album_id}"
+    album_res = requests.get(album_url, headers=headers)
+    album_res.raise_for_status()
+    album_data = album_res.json()
 
-        label_match = re.search(r"℗[^<]+", res.text)
-        label_text = label_match.group(0).strip() if label_match else "Unknown"
-        print(f"[DEBUG] Extracted label: {label_text}")
-
-        return {
-            "track": song_title,
-            "artist": artist_name,
-            "album_id": album_id,
-            "label": label_text
-        }
-
-    except Exception as e:
-        print(f"[ERROR] Exception during scraping: {e}")
-        return {"error": str(e)}
+    return {
+        "track": track["name"],
+        "artist": ", ".join([a["name"] for a in track["artists"]]),
+        "album": album_data["name"],
+        "label": album_data.get("label", "Unknown")
+    }
