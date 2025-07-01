@@ -6,7 +6,8 @@ import time
 from apify_utils import run_trending_scraper
 from data_utils import process_raw_data
 from metadata_utils import shazam_lookup
-from label_filter import is_signed_label
+from label_filter import is_signed_label, filter_unsigned_tracks
+
 
 
 st.set_page_config(page_title="TikTok Trending Discovery", layout="wide")
@@ -36,7 +37,13 @@ if st.button("Fetch Trending Songs"):
 
             with st.spinner("Enriching with Shazam metadata..."):
                 enriched_df = enrich_with_metadata(clean_df)
-                st.dataframe(enriched_df)
+            
+            with st.spinner("Filtering signed tracks..."):
+                unsigned_df = filter_unsigned_tracks(enriched_df)
+            
+                st.success(f"{len(unsigned_df)} unsigned or unknown-label songs found.")
+                st.dataframe(unsigned_df)
+
 
             # Optional: Add download after enrichment is stable
             # csv = enriched_df.to_csv(index=False).encode("utf-8")
