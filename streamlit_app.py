@@ -13,6 +13,10 @@ st.set_page_config(page_title="TikTok Trending Discovery", layout="wide")
 st.title("🎵 TikTok Trending Discovery Tool")
 st.markdown("This tool pulls the top 100 trending TikTok sounds via Apify.")
 
+# ✅ Check if Apify token is loaded
+apify_token_present = "APIFY_API_TOKEN" in st.secrets
+st.markdown(f"**Apify Token Loaded:** {'✅ YES' if apify_token_present else '❌ NO'}")
+
 # Helper to enrich each song with Spotify metadata
 def enrich_with_metadata(df):
     enriched_rows = []
@@ -30,7 +34,6 @@ def enrich_with_metadata(df):
     return pd.DataFrame(enriched_rows)
 
 
-# Main button
 if st.button("Fetch Trending Songs"):
     with st.spinner("Fetching data from Apify..."):
         df = run_trending_scraper()
@@ -41,17 +44,22 @@ if st.button("Fetch Trending Songs"):
             with st.spinner("Enriching with Spotify metadata..."):
                 enriched_df = enrich_with_metadata(clean_df)
 
+            # 🎧 Display full enriched dataset
+            st.subheader("🎧 All Enriched Songs")
+            st.dataframe(enriched_df)
+
             with st.spinner("Filtering signed tracks..."):
                 unsigned_df = filter_unsigned_tracks(enriched_df)
 
                 st.success(f"{len(unsigned_df)} unsigned or unknown-label songs found.")
+
+                # 🆓 Display unsigned filtered results
+                st.subheader("🆓 Unsigned or Unknown-Label Songs")
                 st.dataframe(unsigned_df)
 
-            # Optional: Download buttons
+            # Optional download buttons
             # csv = unsigned_df.to_csv(index=False).encode("utf-8")
-            # json = unsigned_df.to_json(orient="records")
             # st.download_button("Download CSV", csv, "unsigned_songs.csv", "text/csv")
-            # st.download_button("Download JSON", json, "unsigned_songs.json", "application/json")
 
         else:
             st.error("No data was returned from Apify.")
