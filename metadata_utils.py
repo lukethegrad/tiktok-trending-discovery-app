@@ -1,6 +1,8 @@
 import requests
 
 SPOTIFY_API_URL = "https://spotify-label-api.fly.dev/spotify_label"
+SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
 
 def enrich_with_spotify_metadata(title: str, artist: str) -> dict:
     """Query your deployed Spotify label scraper."""
