@@ -6,6 +6,8 @@ import time
 from apify_utils import run_trending_scraper
 from data_utils import process_raw_data
 from metadata_utils import shazam_lookup
+from label_filter import is_signed_label
+
 
 st.set_page_config(page_title="TikTok Trending Discovery", layout="wide")
 
