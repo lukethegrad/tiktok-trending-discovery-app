@@ -1,5 +1,6 @@
 import requests
-import os
+import streamlit as st
+
 
 SPOTIFY_API_URL = "https://spotify-label-api.fly.dev/spotify_label"
 
